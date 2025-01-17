@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -29,6 +30,8 @@ async function run() {
         const userCollection = client.db("learnHiveDB").collection("users");
         const jobApplyCollection = client.db("learnHiveDB").collection("applications");
         const addClassCollection = client.db("learnHiveDB").collection("addClasses");
+        const paymentCollection = client.db("learnHiveDB").collection("payments");
+        const enrollmentCollection = client.db("learnHiveDB").collection("enrollments");
 
         // users related apis
         // app.get('/users', async (req, res) => {
@@ -180,12 +183,141 @@ async function run() {
         });
 
         // teacher related apis
+        app.get('/classes', async (req, res) => {
+            const result = await addClassCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.get('/classes/:email', async (req, res) => {
+            const query = { email: req.params.email }
+            const result = await addClassCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.get('/classes', async (req, res) => {
+            const email = req.query.email;
+            const query = email ? { email } : {};
+            const result = await addClassCollection.find(query).toArray();
+            res.send(result);
+        });
+
         app.post('/classes', async (req, res) => {
             const addClass = req.body;
             const result = await addClassCollection.insertOne(addClass);
             res.send(result);
         })
 
+        app.patch('/classes/approve/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    status: 'accepted' // Update status to 'accepted'
+                }
+            };
+            const result = await addClassCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        });
+
+        app.patch('/classes/reject/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    status: 'rejected' // Update status to 'rejected'
+                }
+            };
+            const result = await addClassCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        });
+
+        app.patch('/classes/:id', async (req, res) => {
+            const item = req.body;
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    name: item.name,
+                    category: item.category,
+                    price: item.price,
+                    recipe: item.recipe,
+                    image: item.image
+                }
+            }
+            const result = await addClassCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
+
+        app.delete('/classes/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await addClassCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        // all classes api
+        app.get('/all-classes', async (req, res) => {
+            try {
+                const result = await addClassCollection.find({ status: 'accepted' }).toArray();
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ message: 'Internal Server Error' });
+            }
+        });
+
+        app.get('/all-classes/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await addClassCollection.findOne(query);
+            res.send(result);
+        })
+
+        
+
+        // Payment related apis
+        app.post('/create-payment-intent', async (req, res) => {
+            const { price } = req.body;
+            const amount = parseInt(price * 100);
+            console.log(amount, 'amount inside the intent')
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            })
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
+        })
+
+        app.get('/payments/:email', async (req, res) => {
+            const query = { email: req.params.email }
+            const result = await paymentCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const paymentResult = await paymentCollection.insertOne(payment);
+
+            // carefully delete each item from the cart
+            // console.log('payment inf', payment);
+            // const query = {
+            //     _id: {
+            //         $in: payment.cartIds.map(id => new ObjectId(id))
+            //     }
+            // };
+
+            // const deleteResult = await paymentCollection.deleteMany(query);
+            // res.send({ paymentResult, deleteResult });
+            res.send({ paymentResult });
+        })
+
+        // app.post('/update-enrollment', async (req, res) => {
+        //     const enrolment = req.body;
+        //     const result = await enrollmentCollection.insertOne(enrolment);
+        //     res.send(result);
+        // })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
