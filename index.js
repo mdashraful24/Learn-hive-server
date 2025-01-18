@@ -313,6 +313,26 @@ async function run() {
             res.send({ paymentResult });
         })
 
+        // student related api
+        app.get('/myEnroll/:email', async (req, res) => {
+            try {
+                const { email } = req.params;
+                const enrolledClasses = await paymentCollection.find({ email }).toArray();
+
+                // Ensure assignments are arrays
+                enrolledClasses.forEach(course => {
+                    if (!Array.isArray(course.assignment)) {
+                        course.assignment = [course.assignment];
+                    }
+                });
+
+                res.send(enrolledClasses);
+            } catch (error) {
+                console.error("Error fetching enrolled classes:", error);
+                res.status(500).send("Server Error");
+            }
+        });
+
         // app.post('/update-enrollment', async (req, res) => {
         //     const enrolment = req.body;
         //     const result = await enrollmentCollection.insertOne(enrolment);
