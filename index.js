@@ -32,12 +32,9 @@ async function run() {
         const addClassCollection = client.db("learnHiveDB").collection("addClasses");
         const paymentCollection = client.db("learnHiveDB").collection("payments");
         const enrollmentCollection = client.db("learnHiveDB").collection("enrollments");
+        const terReportsCollection = client.db("learnHiveDB").collection("reviews");
 
         // users related apis
-        // app.get('/users', async (req, res) => {
-        //     const result = await userCollection.find().toArray();
-        //     res.send(result);
-        // })
         app.get('/users', async (req, res) => {
             const search = req.query.search;
             let query = {};
@@ -52,6 +49,13 @@ async function run() {
             const result = await userCollection.find(query).toArray();
             res.send(result);
         });
+
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await userCollection.findOne(query);
+            res.send(result);
+        })
 
         app.get('/users/admin/:email', async (req, res) => {
             const email = req.params.email;
@@ -133,6 +137,23 @@ async function run() {
             const result = await userCollection.deleteOne(query);
             res.send(result);
         })
+
+        // updated role
+        app.get('/role/:email', async (req, res) => {
+            const email = req.params.email;
+            try {
+                const query = { email: email };
+                const result = await userCollection.findOne(query, { projection: { role: 1 } }); // Only fetch 'role'
+                if (result) {
+                    res.send(result);
+                } else {
+                    res.status(404).send({ error: 'User not found' });
+                }
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ error: 'Failed to fetch user role' });
+            }
+        });
 
         // job apply related apis
         app.get('/applications', async (req, res) => {
@@ -272,7 +293,7 @@ async function run() {
             res.send(result);
         })
 
-        
+
 
         // Payment related apis
         app.post('/create-payment-intent', async (req, res) => {
@@ -285,6 +306,7 @@ async function run() {
                 currency: 'usd',
                 payment_method_types: ['card']
             })
+            console.log(paymentIntent)
             res.send({
                 clientSecret: paymentIntent.client_secret
             })
@@ -333,11 +355,13 @@ async function run() {
             }
         });
 
-        // app.post('/update-enrollment', async (req, res) => {
-        //     const enrolment = req.body;
-        //     const result = await enrollmentCollection.insertOne(enrolment);
-        //     res.send(result);
-        // })
+        // review
+        app.post('/ter-reports', async (req, res) => {
+            const reportData = req.body;
+            const result = await terReportsCollection.insertOne(reportData);
+            res.send(result);
+        });
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
