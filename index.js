@@ -31,8 +31,8 @@ async function run() {
         const jobApplyCollection = client.db("learnHiveDB").collection("applications");
         const addClassCollection = client.db("learnHiveDB").collection("addClasses");
         const paymentCollection = client.db("learnHiveDB").collection("payments");
-        const enrollmentCollection = client.db("learnHiveDB").collection("enrollments");
         const terReportsCollection = client.db("learnHiveDB").collection("reviews");
+        const assignmentCollection = client.db("learnHiveDB").collection("assignments");
 
         // users related apis
         app.get('/users', async (req, res) => {
@@ -255,16 +255,15 @@ async function run() {
         app.patch('/classes/:id', async (req, res) => {
             const item = req.body;
             const id = req.params.id;
-            const filter = { _id: new ObjectId(id) }
+            const filter = { _id: new ObjectId(id) };
+
             const updatedDoc = {
                 $set: {
-                    name: item.name,
-                    category: item.category,
-                    price: item.price,
-                    recipe: item.recipe,
-                    image: item.image
+                    title: item.title,
+                    price: parseFloat(item.price),
+                    description: item.description,
                 }
-            }
+            };
             const result = await addClassCollection.updateOne(filter, updatedDoc);
             res.send(result);
         })
@@ -276,15 +275,98 @@ async function run() {
             res.send(result);
         })
 
+        // load see details
+        app.get('/details/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await addClassCollection.findOne(query);
+            res.send(result);
+        })
+
+        // app.patch('/details/:id', async (req, res) => {
+        //     const item = req.body;
+        //     const id = req.params.id;
+        //     const filter = { _id: new ObjectId(id) };
+        //     const updatedDoc = {
+        //         $push: {
+        //             assignments: item.assignment,
+        //         },
+        //     };
+        //     const result = await addClassCollection.updateOne(filter, updatedDoc);
+        //     res.send(result);
+        // });
+        app.patch('/details/:id', async (req, res) => {
+            const item = req.body; // Incoming request body
+            const id = req.params.id; // ID from the route parameter
+
+            // Log the received data
+            console.log('Received ID:', id); // Log the ID
+            console.log('Received Assignment Data:', item); // Log the incoming assignment data
+
+            const filter = { _id: new ObjectId(id) }; // Filter to find the document
+            const updatedDoc = {
+                $push: {
+                    assignments: item.assignment, // Push assignment into the array
+                },
+            };
+
+            // Log the filter and update operation
+            console.log('Filter for Update:', filter); // Log the filter criteria
+            console.log('Update Operation:', updatedDoc); // Log the update operation
+
+            const result = await addClassCollection.updateOne(filter, updatedDoc); // Update the document
+
+            // Log the result of the update operation
+            console.log('Update Result:', result);
+
+            res.send(result); // Send back the result
+        });
+
+        app.post('/assignments', async (req, res) => {
+            const { submission, courseId, userEmail } = req.body;
+
+            const submissionData = {
+                courseId,
+                userEmail,
+                submission,
+                createdAt: new Date(),
+            };
+
+            const result = await assignmentCollection.insertOne(submissionData);
+            res.send(result);
+        });
+
         // all classes api
+        // app.get('/all-classes', async (req, res) => {
+        //     try {
+        //         const result = await addClassCollection.find({ status: 'accepted' }).toArray();
+        //         res.send(result);
+        //     } catch (error) {
+        //         res.status(500).send({ message: 'Internal Server Error' });
+        //     }
+        // });
+
         app.get('/all-classes', async (req, res) => {
+            const page = parseInt(req.query.page) || 1; // Get the current page number or default to 1
+            const limit = parseInt(req.query.limit) || 10; // Get the number of items per page or default to 10
+            const skip = (page - 1) * limit; // Calculate the number of documents to skip
+
             try {
-                const result = await addClassCollection.find({ status: 'accepted' }).toArray();
-                res.send(result);
-            } catch (error) {
+                const totalClasses = await addClassCollection.countDocuments({ status: 'accepted' }); // Total number of documents
+                const classes = await addClassCollection.find({ status: 'accepted' })
+                    .skip(skip)
+                    .limit(limit)
+                    .toArray();
+
+                res.send({
+                    totalClasses,
+                    classes,
+                });
+            } catch {
                 res.status(500).send({ message: 'Internal Server Error' });
             }
         });
+
 
         app.get('/all-classes/:id', async (req, res) => {
             const id = req.params.id;
@@ -292,8 +374,6 @@ async function run() {
             const result = await addClassCollection.findOne(query);
             res.send(result);
         })
-
-
 
         // Payment related apis
         app.post('/create-payment-intent', async (req, res) => {
@@ -321,17 +401,6 @@ async function run() {
         app.post('/payments', async (req, res) => {
             const payment = req.body;
             const paymentResult = await paymentCollection.insertOne(payment);
-
-            // carefully delete each item from the cart
-            // console.log('payment inf', payment);
-            // const query = {
-            //     _id: {
-            //         $in: payment.cartIds.map(id => new ObjectId(id))
-            //     }
-            // };
-
-            // const deleteResult = await paymentCollection.deleteMany(query);
-            // res.send({ paymentResult, deleteResult });
             res.send({ paymentResult });
         })
 
@@ -356,6 +425,11 @@ async function run() {
         });
 
         // review
+        app.get('/reviews', async (req, res) => {
+            const result = await terReportsCollection.find().toArray();
+            res.send(result);
+        })
+
         app.post('/ter-reports', async (req, res) => {
             const reportData = req.body;
             const result = await terReportsCollection.insertOne(reportData);
