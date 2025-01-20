@@ -283,55 +283,65 @@ async function run() {
             res.send(result);
         })
 
-        // app.patch('/details/:id', async (req, res) => {
-        //     const item = req.body;
-        //     const id = req.params.id;
-        //     const filter = { _id: new ObjectId(id) };
-        //     const updatedDoc = {
-        //         $push: {
-        //             assignments: item.assignment,
-        //         },
-        //     };
-        //     const result = await addClassCollection.updateOne(filter, updatedDoc);
-        //     res.send(result);
-        // });
         app.patch('/details/:id', async (req, res) => {
-            const item = req.body; // Incoming request body
-            const id = req.params.id; // ID from the route parameter
+            const item = req.body;
+            const id = req.params.id;
 
-            // Log the received data
-            console.log('Received ID:', id); // Log the ID
-            console.log('Received Assignment Data:', item); // Log the incoming assignment data
+            console.log('Received ID:', id);
+            console.log('Received Assignment Data:', item);
 
-            const filter = { _id: new ObjectId(id) }; // Filter to find the document
+            const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
                 $push: {
-                    assignments: item.assignment, // Push assignment into the array
+                    assignments: item.assignment,
                 },
             };
 
-            // Log the filter and update operation
-            console.log('Filter for Update:', filter); // Log the filter criteria
-            console.log('Update Operation:', updatedDoc); // Log the update operation
+            console.log('Filter for Update:', filter);
+            console.log('Update Operation:', updatedDoc);
 
-            const result = await addClassCollection.updateOne(filter, updatedDoc); // Update the document
+            const result = await addClassCollection.updateOne(filter, updatedDoc);
 
-            // Log the result of the update operation
             console.log('Update Result:', result);
-
-            res.send(result); // Send back the result
+            res.send(result);
         });
 
-        app.post('/assignments', async (req, res) => {
-            const { submission, courseId, userEmail } = req.body;
+        app.patch('/assignments/:id', async (req, res) => {
+            const item = req.body;
+            const id = req.params.id;
 
+            console.log('Received ID:', id);
+            console.log('Received Assignment Data:', item);
+
+            const filter = { _id: new ObjectId(id)};
+            const updateDoc = {
+                $set: {
+                    assignments: item.assignment,
+                },
+            };
+
+            console.log('Filter for Update:', filter);
+            console.log('Update Operation:', updateDoc);
+
+            const result = await addClassCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
+
+        // assignment
+        app.get('/assignments', async (req, res) => {
+            const result = await assignmentCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.post('/assignments', async (req, res) => {
+            const { submission, courseId, userEmail, submit } = req.body;
             const submissionData = {
                 courseId,
                 userEmail,
                 submission,
                 createdAt: new Date(),
+                submit
             };
-
             const result = await assignmentCollection.insertOne(submissionData);
             res.send(result);
         });
@@ -423,6 +433,12 @@ async function run() {
                 res.status(500).send("Server Error");
             }
         });
+
+
+        app.get('/enroll', async (req, res) => {
+            const result = await paymentCollection.find().toArray();
+            res.send(result);
+        })
 
         // review
         app.get('/reviews', async (req, res) => {
