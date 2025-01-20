@@ -286,44 +286,13 @@ async function run() {
         app.patch('/details/:id', async (req, res) => {
             const item = req.body;
             const id = req.params.id;
-
-            console.log('Received ID:', id);
-            console.log('Received Assignment Data:', item);
-
             const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
                 $push: {
                     assignments: item.assignment,
                 },
             };
-
-            console.log('Filter for Update:', filter);
-            console.log('Update Operation:', updatedDoc);
-
             const result = await addClassCollection.updateOne(filter, updatedDoc);
-
-            console.log('Update Result:', result);
-            res.send(result);
-        });
-
-        app.patch('/assignments/:id', async (req, res) => {
-            const item = req.body;
-            const id = req.params.id;
-
-            console.log('Received ID:', id);
-            console.log('Received Assignment Data:', item);
-
-            const filter = { _id: new ObjectId(id)};
-            const updateDoc = {
-                $set: {
-                    assignments: item.assignment,
-                },
-            };
-
-            console.log('Filter for Update:', filter);
-            console.log('Update Operation:', updateDoc);
-
-            const result = await addClassCollection.updateOne(filter, updateDoc);
             res.send(result);
         });
 
@@ -346,23 +315,13 @@ async function run() {
             res.send(result);
         });
 
-        // all classes api
-        // app.get('/all-classes', async (req, res) => {
-        //     try {
-        //         const result = await addClassCollection.find({ status: 'accepted' }).toArray();
-        //         res.send(result);
-        //     } catch (error) {
-        //         res.status(500).send({ message: 'Internal Server Error' });
-        //     }
-        // });
-
         app.get('/all-classes', async (req, res) => {
-            const page = parseInt(req.query.page) || 1; // Get the current page number or default to 1
-            const limit = parseInt(req.query.limit) || 10; // Get the number of items per page or default to 10
-            const skip = (page - 1) * limit; // Calculate the number of documents to skip
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const skip = (page - 1) * limit;
 
             try {
-                const totalClasses = await addClassCollection.countDocuments({ status: 'accepted' }); // Total number of documents
+                const totalClasses = await addClassCollection.countDocuments({ status: 'accepted' });
                 const classes = await addClassCollection.find({ status: 'accepted' })
                     .skip(skip)
                     .limit(limit)
