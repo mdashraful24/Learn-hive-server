@@ -26,7 +26,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const userCollection = client.db("learnHiveDB").collection("users");
         const jobApplyCollection = client.db("learnHiveDB").collection("applications");
@@ -38,13 +38,13 @@ async function run() {
         // jwt related api
         app.post('/jwt', async (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5h' });
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5d' });
             res.send({ token });
         })
 
         // middlewares
         const verifyToken = (req, res, next) => {
-            console.log('inside verify token', req.headers.authorization);
+            // console.log('inside verify token', req.headers.authorization);
             if (!req.headers.authorization) {
                 return res.status(401).send({ message: 'unauthorized access' });
             }
@@ -58,8 +58,19 @@ async function run() {
             })
         }
 
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            const isAdmin = user?.role === 'admin';
+            if (!isAdmin) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+            next();
+        }
+
         // users related apis
-        app.get('/users', verifyToken, async (req, res) => {
+        app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
             const search = req.query.search;
             let query = {};
             if (search) {
@@ -81,36 +92,35 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/users/admin/:email', async (req, res) => {
+        app.get('/users/admin/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
-
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
             const query = { email: email };
             const user = await userCollection.findOne(query);
-
             let admin = false;
             if (user) {
                 admin = user?.role === 'admin';
             }
             res.send({ admin });
         })
-        app.get('/users/teacher/:email', async (req, res) => {
-            const email = req.params.email;
 
+        app.get('/users/teacher/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
             const query = { email: email };
             const user = await userCollection.findOne(query);
-
             let teacher = false;
             if (user) {
                 teacher = user?.role === 'teacher';
             }
             res.send({ teacher });
         })
-        app.get('/users/student/:email', async (req, res) => {
-            const email = req.params.email;
 
+        app.get('/users/student/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
             const query = { email: email };
             const user = await userCollection.findOne(query);
-
             let student = false;
             if (user) {
                 student = user?.role === 'student';
@@ -131,7 +141,7 @@ async function run() {
             res.send(result);
         })
 
-        app.patch('/users/admin/:id', async (req, res) => {
+        app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) }
             const updatedDoc = {
@@ -155,10 +165,16 @@ async function run() {
             res.send(result);
         });
 
-        app.delete('/users/:id', async (req, res) => {
+        app.delete('/users/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await userCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        // total users
+        app.get('/totalUsers', async (req, res) => {
+            const result = await userCollection.find().toArray();
             res.send(result);
         })
 
@@ -167,7 +183,7 @@ async function run() {
             const email = req.params.email;
             try {
                 const query = { email: email };
-                const result = await userCollection.findOne(query, { projection: { role: 1 } }); // Only fetch 'role'
+                const result = await userCollection.findOne(query, { projection: { role: 1 } });
                 if (result) {
                     res.send(result);
                 } else {
@@ -372,14 +388,14 @@ async function run() {
         app.post('/create-payment-intent', async (req, res) => {
             const { price } = req.body;
             const amount = parseInt(price * 100);
-            console.log(amount, 'amount inside the intent')
+            // console.log(amount, 'amount inside the intent')
 
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
                 currency: 'usd',
                 payment_method_types: ['card']
             })
-            console.log(paymentIntent)
+            // console.log(paymentIntent)
             res.send({
                 clientSecret: paymentIntent.client_secret
             })
@@ -437,8 +453,8 @@ async function run() {
 
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
@@ -452,5 +468,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-    console.log(`LearnHive is open on port ${port}`);
+    // console.log(`LearnHive is open on port ${port}`);
 })
