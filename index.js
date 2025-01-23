@@ -38,11 +38,11 @@ async function run() {
         // jwt related api
         app.post('/jwt', async (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5d' });
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
             res.send({ token });
         })
 
-        // middlewares
+        // verify token middlewares
         const verifyToken = (req, res, next) => {
             // console.log('inside verify token', req.headers.authorization);
             if (!req.headers.authorization) {
