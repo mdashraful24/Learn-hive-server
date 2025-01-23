@@ -174,7 +174,7 @@ async function run() {
             res.send(result);
         })
 
-        // total users
+        // count total users
         app.get('/totalUsers', async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
@@ -197,7 +197,7 @@ async function run() {
             }
         });
 
-        // job apply related apis
+        // job apply related api's
         app.get('/applications', async (req, res) => {
             const result = await jobApplyCollection.find().toArray();
             res.send(result);
@@ -214,7 +214,7 @@ async function run() {
             const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
                 $set: {
-                    status: 'accepted' // Update status to 'accepted'
+                    status: 'accepted'
                 }
             };
             const result = await jobApplyCollection.updateOne(filter, updatedDoc);
@@ -226,7 +226,7 @@ async function run() {
             const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
                 $set: {
-                    status: 'rejected' // Update status to 'rejected'
+                    status: 'rejected'
                 }
             };
             const result = await jobApplyCollection.updateOne(filter, updatedDoc);
@@ -238,14 +238,14 @@ async function run() {
             const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
                 $set: {
-                    status: 'pending' // Set status back to 'pending'
+                    status: 'pending'
                 }
             };
             const result = await jobApplyCollection.updateOne(filter, updatedDoc);
             res.send(result);
         });
 
-        // teacher related apis
+        // classes related api's
         app.get('/classes', async (req, res) => {
             const result = await addClassCollection.find().toArray();
             res.send(result);
