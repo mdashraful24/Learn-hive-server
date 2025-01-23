@@ -32,8 +32,8 @@ async function run() {
         const jobApplyCollection = client.db("learnHiveDB").collection("applications");
         const addClassCollection = client.db("learnHiveDB").collection("addClasses");
         const paymentCollection = client.db("learnHiveDB").collection("payments");
-        const terReportsCollection = client.db("learnHiveDB").collection("reviews");
         const assignmentCollection = client.db("learnHiveDB").collection("assignments");
+        const terReportsCollection = client.db("learnHiveDB").collection("reviews");
 
         // jwt related api
         app.post('/jwt', async (req, res) => {
