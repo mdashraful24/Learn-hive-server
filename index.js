@@ -275,7 +275,7 @@ async function run() {
             const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
                 $set: {
-                    status: 'accepted' // Update status to 'accepted'
+                    status: 'accepted'
                 }
             };
             const result = await addClassCollection.updateOne(filter, updatedDoc);
@@ -287,7 +287,7 @@ async function run() {
             const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
                 $set: {
-                    status: 'rejected' // Update status to 'rejected'
+                    status: 'rejected'
                 }
             };
             const result = await addClassCollection.updateOne(filter, updatedDoc);
@@ -317,7 +317,7 @@ async function run() {
             res.send(result);
         })
 
-        // load see details
+        // see details
         app.get('/details/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -338,7 +338,7 @@ async function run() {
             res.send(result);
         });
 
-        // assignment
+        // assignment related api's
         app.get('/assignments', async (req, res) => {
             const result = await assignmentCollection.find().toArray();
             res.send(result);
@@ -361,14 +361,12 @@ async function run() {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const skip = (page - 1) * limit;
-
             try {
                 const totalClasses = await addClassCollection.countDocuments({ status: 'accepted' });
                 const classes = await addClassCollection.find({ status: 'accepted' })
                     .skip(skip)
                     .limit(limit)
                     .toArray();
-
                 res.send({
                     totalClasses,
                     classes,
@@ -378,7 +376,6 @@ async function run() {
             }
         });
 
-
         app.get('/all-classes/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -386,7 +383,7 @@ async function run() {
             res.send(result);
         })
 
-        // Payment related apis
+        // payment related api's
         app.post('/create-payment-intent', async (req, res) => {
             const { price } = req.body;
             const amount = parseInt(price * 100);
@@ -398,6 +395,7 @@ async function run() {
                 payment_method_types: ['card']
             })
             // console.log(paymentIntent)
+
             res.send({
                 clientSecret: paymentIntent.client_secret
             })
@@ -421,7 +419,6 @@ async function run() {
                 const { email } = req.params;
                 const enrolledClasses = await paymentCollection.find({ email }).toArray();
 
-                // Ensure assignments are arrays
                 enrolledClasses.forEach(course => {
                     if (!Array.isArray(course.assignment)) {
                         course.assignment = [course.assignment];
@@ -441,7 +438,7 @@ async function run() {
             res.send(result);
         })
 
-        // review
+        // review related api's
         app.get('/reviews', async (req, res) => {
             const result = await terReportsCollection.find().toArray();
             res.send(result);
@@ -455,7 +452,7 @@ async function run() {
 
 
         // Send a ping to confirm a successful connection
-        // await client.db("admin").command({ ping: 1 });
+        await client.db("admin").command({ ping: 1 });
         // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
