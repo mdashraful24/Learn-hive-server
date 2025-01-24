@@ -203,6 +203,13 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/applications/:userEmail', async (req, res) => {
+            const userEmail = req.params.userEmail;
+            const query = { userEmail: userEmail };
+            const result = await jobApplyCollection.findOne(query);
+            res.send(result);
+        })
+
         app.post('/applications', async (req, res) => {
             const job = req.body;
             const result = await jobApplyCollection.insertOne(job);
