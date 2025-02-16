@@ -34,6 +34,7 @@ async function run() {
         const paymentCollection = client.db("learnHiveDB").collection("payments");
         const assignmentCollection = client.db("learnHiveDB").collection("assignments");
         const terReportsCollection = client.db("learnHiveDB").collection("reviews");
+        const featuresCollection = client.db("learnHiveDB").collection("features");
 
         // jwt related api
         app.post('/jwt', async (req, res) => {
@@ -442,6 +443,12 @@ async function run() {
 
         app.get('/enroll', async (req, res) => {
             const result = await paymentCollection.find().toArray();
+            res.send(result);
+        })
+
+        // features related api
+        app.get('/features', async (req, res) => {
+            const result = await featuresCollection.find().toArray();
             res.send(result);
         })
 
