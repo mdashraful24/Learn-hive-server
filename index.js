@@ -365,20 +365,46 @@ async function run() {
             res.send(result);
         });
 
+        // app.get('/all-classes', async (req, res) => {
+        //     const page = parseInt(req.query.page) || 1;
+        //     const limit = parseInt(req.query.limit) || 10;
+        //     const skip = (page - 1) * limit;
+        //     try {
+        //         const totalClasses = await addClassCollection.countDocuments({ status: 'accepted' });
+        //         const classes = await addClassCollection.find({ status: 'accepted' })
+        //             .skip(skip)
+        //             .limit(limit)
+        //             .toArray();
+        //         res.send({
+        //             totalClasses,
+        //             classes,
+        //         });
+        //     } catch {
+        //         res.status(500).send({ message: 'Internal Server Error' });
+        //     }
+        // });
         app.get('/all-classes', async (req, res) => {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const skip = (page - 1) * limit;
+
+            const filter = { status: 'accepted' };
+            const sortOption = {};
+
+            if (req.query.sort) {
+                const sortOrder = req.query.sort === "desc" ? -1 : 1;
+                sortOption.price = sortOrder;
+            }
+
             try {
-                const totalClasses = await addClassCollection.countDocuments({ status: 'accepted' });
-                const classes = await addClassCollection.find({ status: 'accepted' })
+                const totalClasses = await addClassCollection.countDocuments(filter);
+                const classes = await addClassCollection.find(filter)
+                    .sort(sortOption)
                     .skip(skip)
                     .limit(limit)
                     .toArray();
-                res.send({
-                    totalClasses,
-                    classes,
-                });
+
+                res.send({ totalClasses, classes });
             } catch {
                 res.status(500).send({ message: 'Internal Server Error' });
             }
