@@ -10,7 +10,6 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.p8flg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -43,7 +42,7 @@ async function run() {
             res.send({ token });
         })
 
-        // verify token middlewares
+        // verify token middlewares codes
         const verifyToken = (req, res, next) => {
             if (!req.headers.authorization) {
                 return res.status(401).send({ message: 'unauthorized access' });
