@@ -420,6 +420,7 @@ async function run() {
         app.post('/create-payment-intent', async (req, res) => {
             const { price } = req.body;
             const amount = parseInt(price * 100);
+            // console.log(amount, 'amount inside the intent')
 
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
@@ -463,7 +464,6 @@ async function run() {
                 res.status(500).send("Server Error");
             }
         });
-
 
         app.get('/enroll', async (req, res) => {
             const result = await paymentCollection.find().toArray();
