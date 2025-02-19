@@ -6,7 +6,6 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const app = express();
 const port = process.env.PORT || 5000;
 
-
 // middleware
 app.use(cors());
 app.use(express.json());
@@ -46,7 +45,6 @@ async function run() {
 
         // verify token middlewares
         const verifyToken = (req, res, next) => {
-            // console.log('inside verify token', req.headers.authorization);
             if (!req.headers.authorization) {
                 return res.status(401).send({ message: 'unauthorized access' });
             }
