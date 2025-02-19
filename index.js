@@ -476,7 +476,6 @@ async function run() {
             res.send(result);
         })
 
-        
         // review related api's
         app.get('/reviews', async (req, res) => {
             const result = await terReportsCollection.find().toArray();
@@ -489,6 +488,7 @@ async function run() {
             res.send(result);
         });
 
+        
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
         // console.log("Pinged your deployment. You successfully connected to MongoDB!");
