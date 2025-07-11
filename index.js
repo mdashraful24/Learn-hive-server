@@ -34,6 +34,7 @@ async function run() {
         const paymentCollection = client.db("learnHiveDB").collection("payments");
         const assignmentCollection = client.db("learnHiveDB").collection("assignments");
         const terReportsCollection = client.db("learnHiveDB").collection("reviews");
+        const featuresCollection = client.db("learnHiveDB").collection("features");
 
         // jwt related api
         app.post('/jwt', async (req, res) => {
@@ -445,6 +446,12 @@ async function run() {
             res.send(result);
         })
 
+        // features related api
+        app.get('/features', async (req, res) => {
+            const result = await featuresCollection.find().toArray();
+            res.send(result);
+        })
+
         // review related api's
         app.get('/reviews', async (req, res) => {
             const result = await terReportsCollection.find().toArray();
@@ -459,8 +466,8 @@ async function run() {
 
 
         // Send a ping to confirm a successful connection
-        // await client.db("admin").command({ ping: 1 });
-        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
@@ -474,5 +481,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-    // console.log(`LearnHive is open on port ${port}`);
+    console.log(`LearnHive is open on port ${port}`);
 })
