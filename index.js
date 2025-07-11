@@ -10,7 +10,6 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.p8flg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -43,9 +42,8 @@ async function run() {
             res.send({ token });
         })
 
-        // verify token middlewares
+        // verify token middlewares codes
         const verifyToken = (req, res, next) => {
-            // console.log('inside verify token', req.headers.authorization);
             if (!req.headers.authorization) {
                 return res.status(401).send({ message: 'unauthorized access' });
             }
@@ -365,20 +363,46 @@ async function run() {
             res.send(result);
         });
 
+        // app.get('/all-classes', async (req, res) => {
+        //     const page = parseInt(req.query.page) || 1;
+        //     const limit = parseInt(req.query.limit) || 10;
+        //     const skip = (page - 1) * limit;
+        //     try {
+        //         const totalClasses = await addClassCollection.countDocuments({ status: 'accepted' });
+        //         const classes = await addClassCollection.find({ status: 'accepted' })
+        //             .skip(skip)
+        //             .limit(limit)
+        //             .toArray();
+        //         res.send({
+        //             totalClasses,
+        //             classes,
+        //         });
+        //     } catch {
+        //         res.status(500).send({ message: 'Internal Server Error' });
+        //     }
+        // });
         app.get('/all-classes', async (req, res) => {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const skip = (page - 1) * limit;
+
+            const filter = { status: 'accepted' };
+            const sortOption = {};
+
+            if (req.query.sort) {
+                const sortOrder = req.query.sort === "desc" ? -1 : 1;
+                sortOption.price = sortOrder;
+            }
+
             try {
-                const totalClasses = await addClassCollection.countDocuments({ status: 'accepted' });
-                const classes = await addClassCollection.find({ status: 'accepted' })
+                const totalClasses = await addClassCollection.countDocuments(filter);
+                const classes = await addClassCollection.find(filter)
+                    .sort(sortOption)
                     .skip(skip)
                     .limit(limit)
                     .toArray();
-                res.send({
-                    totalClasses,
-                    classes,
-                });
+
+                res.send({ totalClasses, classes });
             } catch {
                 res.status(500).send({ message: 'Internal Server Error' });
             }
@@ -440,7 +464,6 @@ async function run() {
             }
         });
 
-
         app.get('/enroll', async (req, res) => {
             const result = await paymentCollection.find().toArray();
             res.send(result);
@@ -464,7 +487,7 @@ async function run() {
             res.send(result);
         });
 
-
+        
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
